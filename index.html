@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E-commerce Recommender</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-start p-8">
+  <header class="text-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">🛍️ E-commerce Product Recommender</h1>
+    <p class="text-gray-600">Discover products curated just for you — with AI-powered explanations.</p>
+  </header>
+
+  <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-6 mb-8">
+    <label class="block mb-2 text-gray-700 font-medium">Enter User ID</label>
+    <input
+      id="userIdInput"
+      type="text"
+      placeholder="e.g. demo_user"
+      class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+    />
+    <button
+      id="getRecsBtn"
+      class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200"
+    >
+      Get Recommendations
+    </button>
+  </div>
+
+  <div id="loading" class="hidden text-gray-500 mb-4 animate-pulse">Fetching recommendations...</div>
+  <div id="recommendations" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-5xl"></div>
+
+  <script>
+    const btn = document.getElementById("getRecsBtn");
+    const userInput = document.getElementById("userIdInput");
+    const recContainer = document.getElementById("recommendations");
+    const loading = document.getElementById("loading");
+
+    btn.addEventListener("click", async () => {
+      const userId = userInput.value.trim();
+      if (!userId) {
+        alert("Please enter a user ID");
+        return;
+      }
+
+      recContainer.innerHTML = "";
+      loading.classList.remove("hidden");
+
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/recommendations?user_id=${userId}&k=5`);
+        const recs = response.data.recommendations;
+
+        if (!recs || recs.length === 0) {
+          recContainer.innerHTML = `<p class='text-gray-600 text-center col-span-full'>No recommendations found for this user.</p>`;
+        } else {
+          recs.forEach((item) => {
+            const card = document.createElement("div");
+            card.className =
+              "bg-white p-5 rounded-xl shadow hover:shadow-xl transition transform hover:-translate-y-1";
+            card.innerHTML = `
+              <img src="https://source.unsplash.com/featured/300x200/?${item.title}" 
+                   alt="${item.title}" 
+                   class="w-full h-40 object-cover rounded-md mb-4">
+              <h2 class="text-lg font-semibold text-gray-800">${item.title}</h2>
+              <p class="text-sm text-gray-600 mt-2">${item.why}</p>
+            `;
+            recContainer.appendChild(card);
+          });
+        }
+      } catch (err) {
+        recContainer.innerHTML = `<p class='text-red-500 text-center col-span-full'>Error fetching recommendations.</p>`;
+      } finally {
+        loading.classList.add("hidden");
+      }
+    });
+  </script>
+</body>
+</html>
